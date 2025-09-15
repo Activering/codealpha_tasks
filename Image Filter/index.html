@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Gallery</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .gallery-wrapper {
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 0 20px;
+        }
+
+        .gallery-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+        }
+
+        /* Thumbnail Columns */
+        .thumbnail-column {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 120px;
+            max-height: 600px;
+            overflow-y: auto;
+            padding: 10px 0;
+        }
+
+        .thumbnail-column::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .thumbnail-column::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .thumbnail-column::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+
+        .thumbnail-column::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        .thumbnail {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            opacity: 0.8;
+        }
+
+        .thumbnail:hover {
+            opacity: 1;
+            transform: scale(1.05);
+        }
+
+        .thumbnail.active {
+            opacity: 1;
+            border: 2px solid #3498db;
+        }
+
+        /* Main Image Display */
+        .main-image-section {
+            position: relative;
+            width: 70%;
+            max-width: 800px;
+        }
+
+        .main-image {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+            transition: all 0.5s ease;
+        }
+
+        .image-info {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .image-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #2c3e50;
+        }
+
+        .image-description {
+            color: #7f8c8d;
+            font-style: italic;
+        }
+
+        /* Navigation Buttons */
+        .nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(255, 255, 255, 0.8);
+            border: none;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+
+        .nav-btn:hover {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .prev-btn {
+            left: -22px;
+        }
+
+        .next-btn {
+            right: -22px;
+        }
+
+        /* Lightbox */
+        .lightbox {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .lightbox-content {
+            position: relative;
+            max-width: 90%;
+            max-height: 90%;
+        }
+
+        .lightbox-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .close-lightbox {
+            position: absolute;
+            top: -40px;
+            right: 0;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+        }
+
+        .lightbox-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            background-color: rgba(0, 0, 0, 0.5);
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        .lightbox-prev {
+            left: -70px;
+        }
+
+        .lightbox-next {
+            right: -70px;
+        }
+
+        /* Filter Section */
+        .filter-section {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            background-color: #3498db;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .thumbnail-column {
+                width: 90px;
+            }
+            
+            .thumbnail {
+                width: 80px;
+                height: 80px;
+            }
+            
+            .main-image-section {
+                width: 65%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .gallery-container {
+                flex-direction: column;
+            }
+            
+            .thumbnail-column {
+                flex-direction: row;
+                width: 100%;
+                max-height: none;
+                overflow-x: auto;
+                overflow-y: hidden;
+                margin-bottom: 20px;
+                padding: 10px 0;
+            }
+            
+            .thumbnail-column::-webkit-scrollbar {
+                height: 6px;
+            }
+            
+            .main-image-section {
+                width: 100%;
+            }
+            
+            .nav-btn {
+                display: none;
+            }
+            
+            .lightbox-nav {
+                width: 40px;
+                height: 40px;
+                font-size: 1.5rem;
+            }
+            
+            .lightbox-prev {
+                left: -50px;
+            }
+            
+            .lightbox-next {
+                right: -50px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .filter-btn {
+                padding: 6px 12px;
+                font-size: 0.8rem;
+            }
+            
+            .image-title {
+                font-size: 1.4rem;
+            }
+            
+            .thumbnail {
+                width: 70px;
+                height: 70px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="gallery-wrapper">
+        <!-- Filter Section -->
+        <div class="filter-section">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="nature">Nature</button>
+            <button class="filter-btn" data-filter="landscape">Landscape</button>
+            <button class="filter-btn" data-filter="urban">Urban</button>
+            <button class="filter-btn" data-filter="wildlife">Wildlife</button>
+        </div>
+
+        <!-- Gallery Container -->
+        <div class="gallery-container">
+            <!-- Left Thumbnails -->
+            <div class="thumbnail-column left-thumbnails">
+                <!-- Thumbnails will be dynamically generated -->
+            </div>
+
+            <!-- Main Image -->
+            <div class="main-image-section">
+                <img src="https://picsum.photos/seed/main1/800/600.jpg" alt="Main Image" class="main-image" id="mainImage">
+                <button class="nav-btn prev-btn" id="prevBtn">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <button class="nav-btn next-btn" id="nextBtn">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+                <div class="image-info">
+                    <h2 class="image-title" id="imageTitle">Acetumuman</h2>
+                    <p class="image-description" id="imageDescription">Aagittis id consectetur punus uf</p>
+                </div>
+            </div>
+
+            <!-- Right Thumbnails -->
+            <div class="thumbnail-column right-thumbnails">
+                <!-- Thumbnails will be dynamically generated -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Lightbox -->
+    <div class="lightbox" id="lightbox">
+        <div class="lightbox-content">
+            <span class="close-lightbox" id="closeLightbox">&times;</span>
+            <img src="" alt="Lightbox Image" class="lightbox-image" id="lightboxImage">
+            <div class="lightbox-nav lightbox-prev" id="lightboxPrev">
+                <i class="fas fa-chevron-left"></i>
+            </div>
+            <div class="lightbox-nav lightbox-next" id="lightboxNext">
+                <i class="fas fa-chevron-right"></i>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Image data with placeholder images
+            const images = [
+                {
+                    id: 1,
+                    src: 'https://picsum.photos/seed/main1/800/600.jpg',
+                    thumb: 'https://picsum.photos/seed/main1/100/100.jpg',
+                    title: 'Acetumuman',
+                    description: 'Aagittis id consectetur punus uf',
+                    category: 'landscape'
+                },
+                {
+                    id: 2,
+                    src: 'https://picsum.photos/seed/img2/800/600.jpg',
+                    thumb: 'https://picsum.photos/seed/img2/100/100.jpg',
+                    title: 'Forest Path',
+                    description: 'Serene woodland trail in autumn',
+                    category: 'nature'
+                },
+                {
+                    id: 3,
+                    src: 'https://picsum.photos/seed/img3/800/600.jpg',
+                    thumb: 'https://picsum.photos/seed/img3/100/100.jpg',
+                    title: 'Ocean Sunset',
+                    description: 'Golden hour at the seaside',
+                    category: 'landscape'
+                },
+                {
+                    id: 4,
+                    src: 'https://picsum.photos/seed/img4/800/600.jpg',
+                    thumb: 'https://picsum.photos/seed/img4/100/100.jpg',
+                    title: 'City Skyline',
+                    description: 'Urban landscape at twilight',
+                    category: 'urban'
+                },
+                {
+                    id: 5,
+                    src: 'https://picsum.photos/seed/img5/800/600.jpg',
+                    thumb: 'https://picsum.photos/seed/img5/100/100.jpg',
+                    title: 'Desert Dunes',
+                    description: 'Sand patterns in the morning light',
+                    category: 'landscape'
+                },
+                {
+                    id: 6,
+                    src: 'https://picsum.photos/seed/img6/800/600.jpg',
+                    thumb: 'https://picsum.photos/seed/img6/100/100.jpg',
+                    title: 'Wildlife Safari',
+                    description: 'Majestic animals in their habitat',
+                    category: 'wildlife'
+                },
+                {
+                    id: 7,
+                    src: 'https://picsum.photos/seed/img7/800/600.jpg',
+                    thumb: 'https://picsum.photos/seed/img7/100/100.jpg',
+                    title: 'River Valley',
+                    description: 'Winding river through green hills',
+                    category: 'nature'
+                },
+                {
+                    id: 8,
+                    src: 'https://picsum.photos/seed/img8/800/600.jpg',
+                    thumb: 'https://picsum.photos/seed/img8/100/100.jpg',
+                    title: 'Urban Architecture',
+                    description: 'Modern buildings in the city center',
+                    category: 'urban'
+                },
+                {
+                    id: 9,
+                    src: 'https://picsum.photos/seed/img9/800/600.jpg',
+                    thumb: 'https://picsum.photos/seed/img9/100/100.jpg',
+                    title: 'Tropical Paradise',
+                    description: 'Palm trees and turquoise waters',
+                    category: 'landscape'
+                },
+                {
+                    id: 10,
+                    src: 'https://picsum.photos/seed/img10/800/600.jpg',
+                    thumb: 'https://picsum.photos/seed/img10/100/100.jpg',
+                    title: 'Birds in Flight',
+                    description: 'Migratory birds over wetlands',
+                    category: 'wildlife'
+                }
+            ];
+
+            // DOM Elements
+            const mainImage = document.getElementById('mainImage');
+            const imageTitle = document.getElementById('imageTitle');
+            const imageDescription = document.getElementById('imageDescription');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const leftThumbnails = document.querySelector('.left-thumbnails');
+            const rightThumbnails = document.querySelector('.right-thumbnails');
+            const filterBtns = document.querySelectorAll('.filter-btn');
+            const lightbox = document.getElementById('lightbox');
+            const lightboxImage = document.getElementById('lightboxImage');
+            const closeLightbox = document.getElementById('closeLightbox');
+            const lightboxPrev = document.getElementById('lightboxPrev');
+            const lightboxNext = document.getElementById('lightboxNext');
+
+            // State
+            let currentImageIndex = 0;
+            let filteredImages = [...images];
+            let currentFilter = 'all';
+
+            // Initialize gallery
+            function initGallery() {
+                renderThumbnails();
+                displayImage(0);
+                setupEventListeners();
+            }
+
+            // Render thumbnails
+            function renderThumbnails() {
+                leftThumbnails.innerHTML = '';
+                rightThumbnails.innerHTML = '';
+
+                filteredImages.forEach((image, index) => {
+                    const thumbnail = document.createElement('img');
+                    thumbnail.src = image.thumb;
+                    thumbnail.alt = image.title;
+                    thumbnail.classList.add('thumbnail');
+                    thumbnail.dataset.index = index;
+
+                    if (index === currentImageIndex) {
+                        thumbnail.classList.add('active');
+                    }
+
+                    thumbnail.addEventListener('click', () => {
+                        displayImage(index);
+                    });
+
+                    // Distribute thumbnails between left and right columns
+                    if (index % 2 === 0) {
+                        leftThumbnails.appendChild(thumbnail);
+                    } else {
+                        rightThumbnails.appendChild(thumbnail);
+                    }
+                });
+            }
+
+            // Display image
+            function displayImage(index) {
+                if (index < 0) index = filteredImages.length - 1;
+                if (index >= filteredImages.length) index = 0;
+
+                currentImageIndex = index;
+                const image = filteredImages[index];
+
+                mainImage.src = image.src;
+                imageTitle.textContent = image.title;
+                imageDescription.textContent = image.description;
+
+                // Update active thumbnail
+                document.querySelectorAll('.thumbnail').forEach(thumb => {
+                    thumb.classList.remove('active');
+                    if (parseInt(thumb.dataset.index) === index) {
+                        thumb.classList.add('active');
+                    }
+                });
+            }
+
+            // Setup event listeners
+            function setupEventListeners() {
+                // Navigation buttons
+                prevBtn.addEventListener('click', () => {
+                    displayImage(currentImageIndex - 1);
+                });
+
+                nextBtn.addEventListener('click', () => {
+                    displayImage(currentImageIndex + 1);
+                });
+
+                // Main image click to open lightbox
+                mainImage.addEventListener('click', () => {
+                    openLightbox();
+                });
+
+                // Lightbox controls
+                closeLightbox.addEventListener('click', () => {
+                    closeLightboxFunc();
+                });
+
+                lightbox.addEventListener('click', (e) => {
+                    if (e.target === lightbox) {
+                        closeLightboxFunc();
+                    }
+                });
+
+                lightboxPrev.addEventListener('click', () => {
+                    navigateLightbox(-1);
+                });
+
+                lightboxNext.addEventListener('click', () => {
+                    navigateLightbox(1);
+                });
+
+                // Filter buttons
+                filterBtns.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        // Update active filter button
+                        filterBtns.forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+
+                        // Apply filter
+                        currentFilter = btn.dataset.filter;
+                        applyFilter();
+                    });
+                });
+
+                // Keyboard navigation
+                document.addEventListener('keydown', (e) => {
+                    if (lightbox.style.display === 'flex') {
+                        if (e.key === 'Escape') {
+                            closeLightboxFunc();
+                        } else if (e.key === 'ArrowLeft') {
+                            navigateLightbox(-1);
+                        } else if (e.key === 'ArrowRight') {
+                            navigateLightbox(1);
+                        }
+                    } else {
+                        if (e.key === 'ArrowLeft') {
+                            displayImage(currentImageIndex - 1);
+                        } else if (e.key === 'ArrowRight') {
+                            displayImage(currentImageIndex + 1);
+                        }
+                    }
+                });
+            }
+
+            // Apply filter
+            function applyFilter() {
+                if (currentFilter === 'all') {
+                    filteredImages = [...images];
+                } else {
+                    filteredImages = images.filter(img => img.category === currentFilter);
+                }
+
+                currentImageIndex = 0;
+                renderThumbnails();
+                displayImage(0);
+            }
+
+            // Lightbox functions
+            function openLightbox() {
+                lightbox.style.display = 'flex';
+                lightboxImage.src = filteredImages[currentImageIndex].src;
+            }
+
+            function closeLightboxFunc() {
+                lightbox.style.display = 'none';
+            }
+
+            function navigateLightbox(direction) {
+                const newIndex = currentImageIndex + direction;
+                if (newIndex < 0) {
+                    currentImageIndex = filteredImages.length - 1;
+                } else if (newIndex >= filteredImages.length) {
+                    currentImageIndex = 0;
+                } else {
+                    currentImageIndex = newIndex;
+                }
+
+                lightboxImage.src = filteredImages[currentImageIndex].src;
+                displayImage(currentImageIndex);
+            }
+
+            // Initialize the gallery
+            initGallery();
+        });
+    </script>
+</body>
+</html>
